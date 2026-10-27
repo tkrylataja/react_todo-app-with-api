@@ -1,8 +1,9 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { Todo } from '../../types/Todo';
 import classNames from 'classnames';
+import { useTodoEditing } from '../../hooks/useTodoEditing';
 
 type Props = {
   todo: Todo;
@@ -19,50 +20,16 @@ export const TodoItem: React.FC<Props> = ({
   onToggleStatus,
   onUpdate,
 }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [newTitle, setNewTitle] = useState(todo.title);
-
-  useEffect(() => {
-    if (isEditing) {
-      inputRef.current?.focus();
-    }
-  }, [isEditing]);
-
-  const handleSave = () => {
-    const trimmedTitle = newTitle.trim();
-
-    if (trimmedTitle === '') {
-      onDelete(todo.id);
-
-      return;
-    }
-
-    if (trimmedTitle === todo.title) {
-      setIsEditing(false);
-
-      return;
-    }
-
-    onUpdate(todo.id, { title: trimmedTitle })
-      .then(() => setIsEditing(false))
-      .catch(() => {
-        /* помилку показує App */
-      });
-  };
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    handleSave();
-  };
-
-  const handleKeyUp = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Escape') {
-      setNewTitle(todo.title);
-      setIsEditing(false);
-    }
-  };
+  const {
+    inputRef,
+    isEditing,
+    newTitle,
+    setNewTitle,
+    startEditing,
+    handleSave,
+    handleSubmit,
+    handleKeyUp,
+  } = useTodoEditing({ todo, onDelete, onUpdate });
 
   return (
     <div
@@ -100,10 +67,11 @@ export const TodoItem: React.FC<Props> = ({
           <span
             data-cy="TodoTitle"
             className="todo__title"
-            onDoubleClick={() => setIsEditing(true)}
+            onDoubleClick={startEditing}
           >
             {todo.title}
           </span>
+
           <button
             type="button"
             className="todo__remove"
